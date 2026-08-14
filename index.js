@@ -1,12 +1,14 @@
 import { getRequestHeaders } from '../../../../script.js';
 
 const BUTTON_ID = 'mistral_stt_button';
+const FLOATING_BUTTON_ID = 'mistral_stt_floating_button';
 const TRANSCRIPTION_ENDPOINT = '/api/openai/mistral/transcribe-audio';
 const TRANSCRIPTION_MODEL = 'voxtral-mini-latest';
 const COMPOSER_TIMEOUT_MS = 15_000;
 
 let initializationPromise;
 let button;
+let floatingButton;
 let mediaRecorder;
 let mediaStream;
 let audioChunks = [];
@@ -21,8 +23,42 @@ export function init() {
 
 async function initialize() {
     await domReady();
-    await mountButton();
+    mountFloatingButton();
+    await mountButton().catch(error => {
+        console.warn('[Mistral STT] Composer microphone unavailable; using floating button.', error);
+    });
     observeComposer();
+}
+
+function createMicrophoneButton(id, className) {
+    const element = document.createElement('div');
+    element.id = id;
+    element.className = className;
+    element.tabIndex = 0;
+    element.setAttribute('role', 'button');
+    element.addEventListener('click', toggleRecording);
+    element.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggleRecording();
+        }
+    });
+    return element;
+}
+
+function mountFloatingButton() {
+    const existingButton = document.getElementById(FLOATING_BUTTON_ID);
+    if (existingButton) {
+        floatingButton = existingButton;
+    } else {
+        floatingButton = createMicrophoneButton(
+            FLOATING_BUTTON_ID,
+            'fa-solid fa-microphone interactable mistral-stt-button mistral-stt-floating-button',
+        );
+        document.body.append(floatingButton);
+    }
+    updateButtonState(state);
+    console.info('[Mistral STT] Floating microphone button ready.');
 }
 
 async function mountButton() {
@@ -34,18 +70,10 @@ async function mountButton() {
     }
 
     const container = await findComposerContainer();
-    button = document.createElement('div');
-    button.id = BUTTON_ID;
-    button.className = 'fa-solid fa-microphone speech-toggle interactable mistral-stt-button';
-    button.tabIndex = 0;
-    button.setAttribute('role', 'button');
-    button.addEventListener('click', toggleRecording);
-    button.addEventListener('keydown', event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            toggleRecording();
-        }
-    });
+    button = createMicrophoneButton(
+        BUTTON_ID,
+        'fa-solid fa-microphone speech-toggle interactable mistral-stt-button',
+    );
 
     container.prepend(button);
     updateButtonState('idle');
@@ -283,40 +311,40 @@ function getPreferredRecordingMimeType() {
 
 function updateButtonState(nextState) {
     state = nextState;
-    if (!button) {
-        return;
-    }
+    [button, floatingButton].filter(Boolean).forEach(applyButtonState);
+}
 
-    button.classList.remove('fa-microphone', 'fa-stop', 'fa-spinner', 'fa-spin', 'recording', 'transcribing');
+function applyButtonState(currentButton) {
+    currentButton.classList.remove('fa-microphone', 'fa-stop', 'fa-spinner', 'fa-spin', 'recording', 'transcribing');
 
     if (state === 'recording') {
-        button.classList.add('fa-stop', 'recording');
-        button.title = 'Stop recording and transcribe';
-        button.setAttribute('aria-label', button.title);
-        button.setAttribute('aria-pressed', 'true');
+        currentButton.classList.add('fa-stop', 'recording');
+        currentButton.title = 'Stop recording and transcribe';
+        currentButton.setAttribute('aria-label', currentButton.title);
+        currentButton.setAttribute('aria-pressed', 'true');
         return;
     }
 
     if (state === 'transcribing') {
-        button.classList.add('fa-spinner', 'fa-spin', 'transcribing');
-        button.title = 'Transcribing with Mistral';
-        button.setAttribute('aria-label', button.title);
-        button.setAttribute('aria-pressed', 'false');
+        currentButton.classList.add('fa-spinner', 'fa-spin', 'transcribing');
+        currentButton.title = 'Transcribing with Mistral';
+        currentButton.setAttribute('aria-label', currentButton.title);
+        currentButton.setAttribute('aria-pressed', 'false');
         return;
     }
 
     if (state === 'starting') {
-        button.classList.add('fa-spinner', 'fa-spin', 'transcribing');
-        button.title = 'Opening microphone';
-        button.setAttribute('aria-label', button.title);
-        button.setAttribute('aria-pressed', 'false');
+        currentButton.classList.add('fa-spinner', 'fa-spin', 'transcribing');
+        currentButton.title = 'Opening microphone';
+        currentButton.setAttribute('aria-label', currentButton.title);
+        currentButton.setAttribute('aria-pressed', 'false');
         return;
     }
 
-    button.classList.add('fa-microphone');
-    button.title = 'Record with Mistral speech-to-text';
-    button.setAttribute('aria-label', button.title);
-    button.setAttribute('aria-pressed', 'false');
+    currentButton.classList.add('fa-microphone');
+    currentButton.title = 'Record with Mistral speech-to-text';
+    currentButton.setAttribute('aria-label', currentButton.title);
+    currentButton.setAttribute('aria-pressed', 'false');
 }
 
 function cleanupMedia() {
@@ -417,7 +445,9 @@ export function dispose() {
     composerObserver?.disconnect();
     composerObserver = undefined;
     button?.remove();
+    floatingButton?.remove();
     button = undefined;
+    floatingButton = undefined;
     initializationPromise = undefined;
     state = 'idle';
 }

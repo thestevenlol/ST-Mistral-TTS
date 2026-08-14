@@ -25,7 +25,7 @@ Reload SillyTavern after installation.
 
 ## Use
 
-1. Click the microphone button beside the message controls.
+1. Click either the microphone beside the message controls or the floating microphone near the bottom-right of the page.
 2. Speak. The button changes to a red stop icon while recording.
 3. Click the button again.
 4. Wait for the spinner to finish.

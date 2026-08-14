@@ -27,6 +27,43 @@
     pointer-events: none;
 }
 
+#mistral_stt_floating_button {
+    align-items: center;
+    background: var(--SmartThemeBlurTintColor, rgb(30 30 30 / 92%));
+    border: 1px solid var(--SmartThemeBorderColor, rgb(255 255 255 / 25%));
+    border-radius: 50%;
+    bottom: 88px;
+    box-shadow: 0 3px 14px rgb(0 0 0 / 45%);
+    cursor: pointer;
+    display: flex;
+    font-size: 18px;
+    height: 46px;
+    justify-content: center;
+    opacity: 0.92;
+    position: fixed;
+    right: 18px;
+    transition: opacity 120ms ease, transform 120ms ease;
+    width: 46px;
+    z-index: 10000;
+}
+
+#mistral_stt_floating_button:hover,
+#mistral_stt_floating_button:focus-visible {
+    opacity: 1;
+    transform: scale(1.08);
+}
+
+#mistral_stt_floating_button.recording {
+    background: rgb(110 20 20 / 95%);
+    color: #fff;
+    animation: mistral-stt-pulse 1.2s ease-in-out infinite;
+}
+
+#mistral_stt_floating_button.transcribing {
+    cursor: wait;
+    pointer-events: none;
+}
+
 @keyframes mistral-stt-pulse {
     0%, 100% {
         filter: drop-shadow(0 0 0 rgb(239 83 80 / 0%));
@@ -39,7 +76,9 @@
 
 @media (prefers-reduced-motion: reduce) {
     #mistral_stt_button,
-    #mistral_stt_button.recording {
+    #mistral_stt_button.recording,
+    #mistral_stt_floating_button,
+    #mistral_stt_floating_button.recording {
         animation: none;
         transition: none;
     }
