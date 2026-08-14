@@ -1,65 +1,53 @@
-# st-mistral-TTS
+# Mistral Speech to Text for SillyTavern
 
-A private-use SillyTavern extension that adds Mistral Voxtral as a native text-to-speech provider.
+A focused SillyTavern extension that records your microphone, transcribes the recording with Mistral Voxtral, and inserts the transcript into the chat message box for review.
 
-## Features
+It never sends the message automatically.
 
-- Registers **Mistral** in SillyTavern's existing TTS provider selector.
-- Uses SillyTavern's automatic narration, message narration buttons, playback queue, and character voice maps.
-- Loads preset and custom voices from the Mistral API.
-- Supports voice previews and non-streaming MP3 speech generation.
-- Optionally removes Markdown, code blocks, and emoji before narration.
-- Requires no server plugin or build step.
+## Requirements
+
+- A current SillyTavern installation with the Mistral transcription route.
+- A MistralAI API key saved in SillyTavern under **API Connections → Chat Completion → MistralAI**.
+- A browser with microphone and `MediaRecorder` support.
+- HTTPS when SillyTavern is accessed from another device or hostname. Browsers generally block microphone access on insecure non-local origins.
+
+The extension uses SillyTavern's `/api/openai/mistral/transcribe-audio` backend route, so the API key stays in SillyTavern and is not stored by this extension.
 
 ## Install
 
-1. In SillyTavern, open **Extensions**.
-2. Choose **Install Extension**.
-3. Paste this repository's Git URL.
-4. Reload SillyTavern if prompted.
-
-For local development, clone this repository into:
+In SillyTavern, open **Extensions → Install Extension** and paste:
 
 ```text
-SillyTavern/public/scripts/extensions/third-party/st-mistral-TTS
+https://github.com/thestevenlol/ST-Mistral-TTS
 ```
 
-## Configure
+Reload SillyTavern after installation.
 
-1. Open SillyTavern's **Text To Speech** extension panel.
-2. Select **Mistral** as the provider.
-3. Paste a Mistral API key and select **Save key**.
-4. Select **Refresh** to load voices.
-5. Assign a voice to the current character in SillyTavern's voice map.
-6. Enable TTS and, optionally, automatic generation.
+## Use
 
-The default model is `voxtral-mini-tts-2603`. It can be changed in the provider settings if Mistral introduces a newer model identifier.
+1. Click the microphone button beside the message controls.
+2. Speak. The button changes to a red stop icon while recording.
+3. Click the button again.
+4. Wait for the spinner to finish.
+5. Review or edit the transcript in the message box, then send it normally.
 
-## API-key notice
-
-This MVP calls `https://api.mistral.ai` directly from the browser. The API key is stored in browser `localStorage` under `st-mistral-tts-api-key`; it is not stored in the provider settings and is never deliberately logged.
-
-Browser-side SillyTavern extensions running on the same installation may be able to access local storage. Use this version only in an installation where you trust every extension. The key can be removed with the provider's **Clear** button.
+If text is already in the message box, the transcript is appended without deleting the draft.
 
 ## Troubleshooting
 
-### Mistral rejected the API key
+### No microphone prompt
 
-Confirm that the key is current and that the Mistral account has access to Voxtral TTS.
+Allow microphone access for the SillyTavern site in the browser's site permissions. If SillyTavern is hosted remotely, access it over HTTPS.
 
-### No voices appear
+### Mistral transcription was rejected
 
-Select **Refresh** after saving the key. You can also switch **Voices to load** to **Preset and custom**.
+Save or replace the MistralAI API key in SillyTavern, then try again. The extension deliberately has no separate API-key field.
 
-### Network or CORS error
+### Transcription route not found
 
-Open the browser developer console and look for a blocked request to `https://api.mistral.ai`. Direct browser access depends on the API's current CORS policy.
+Update SillyTavern. Older versions do not include the Mistral transcription backend used by this extension.
 
-### HTTP 403 while generating speech
+### Two microphone buttons
 
-Mistral applies content moderation to TTS requests. The input may have been rejected even if the API key is valid.
-
-## Current scope
-
-This first version intentionally does not create, edit, or delete custom voices. Voice cloning and streaming playback can be added later.
+SillyTavern's full Speech Recognition extension also supports Mistral. Disable that extension if you only want this focused microphone workflow.
 

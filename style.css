@@ -1,51 +1,47 @@
-.mistral-tts-settings {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.mistral-tts-warning {
-    padding: 0.65rem 0.75rem;
-    border: 1px solid color-mix(in srgb, var(--SmartThemeQuoteColor) 65%, transparent);
-    border-radius: 0.35rem;
-    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 12%, transparent);
-    font-size: 0.9em;
-}
-
-.mistral-tts-key-row {
-    display: flex;
+#mistral_stt_button {
     align-items: center;
-    gap: 0.4rem;
-    flex-wrap: wrap;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    min-height: 32px;
+    min-width: 32px;
+    opacity: 0.8;
+    transition: color 120ms ease, opacity 120ms ease, transform 120ms ease;
 }
 
-.mistral-tts-key-row input {
-    flex: 1 1 14rem;
+#mistral_stt_button:hover,
+#mistral_stt_button:focus-visible {
+    opacity: 1;
+    transform: scale(1.08);
 }
 
-.mistral-tts-key-saved {
-    color: var(--SmartThemeEmColor);
+#mistral_stt_button.recording {
+    color: #ef5350;
+    opacity: 1;
+    animation: mistral-stt-pulse 1.2s ease-in-out infinite;
 }
 
-.mistral-tts-checkbox {
-    margin-top: 0.25rem;
+#mistral_stt_button.transcribing {
+    cursor: wait;
+    opacity: 0.7;
+    pointer-events: none;
 }
 
-.mistral-tts-status {
-    min-height: 1.25em;
-    margin-top: 0.25rem;
-    font-size: 0.9em;
+@keyframes mistral-stt-pulse {
+    0%, 100% {
+        filter: drop-shadow(0 0 0 rgb(239 83 80 / 0%));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 5px rgb(239 83 80 / 85%));
+    }
 }
 
-.mistral-tts-status.success {
-    color: var(--SmartThemeEmColor);
-}
-
-.mistral-tts-status.warning {
-    color: var(--SmartThemeQuoteColor);
-}
-
-.mistral-tts-status.error {
-    color: var(--warning-color, #d44);
+@media (prefers-reduced-motion: reduce) {
+    #mistral_stt_button,
+    #mistral_stt_button.recording {
+        animation: none;
+        transition: none;
+    }
 }
 

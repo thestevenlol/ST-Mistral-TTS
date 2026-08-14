@@ -1,12 +1,12 @@
 {
-    "display_name": "Mistral TTS",
-    "loading_order": 20,
+    "display_name": "Mistral Speech to Text",
+    "loading_order": 14,
     "requires": [],
     "optional": [],
     "js": "index.js",
     "css": "style.css",
     "author": "Jack",
-    "version": "0.1.2",
+    "version": "0.2.0",
     "homePage": "https://github.com/thestevenlol/ST-Mistral-TTS",
     "auto_update": true
 }
