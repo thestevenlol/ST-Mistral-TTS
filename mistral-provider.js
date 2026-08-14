@@ -196,15 +196,30 @@ export class MistralTtsProvider {
     async fetchTtsVoiceObjects() {
         this.requireApiKey();
         const type = encodeURIComponent(this.settings?.voiceType ?? 'all');
-        const response = await this.mistralFetch(`/audio/voices?limit=1000&offset=0&type=${type}`);
-        const data = await response.json();
+        const pageSize = 100;
+        const voices = [];
+        let offset = 0;
 
-        if (!Array.isArray(data?.items)) {
-            throw new Error('Mistral returned an invalid voice list.');
+        while (true) {
+            const response = await this.mistralFetch(`/audio/voices?limit=${pageSize}&offset=${offset}&type=${type}`);
+            const data = await response.json();
+
+            if (!Array.isArray(data?.items)) {
+                throw new Error('Mistral returned an invalid voice list.');
+            }
+
+            voices.push(...data.items);
+
+            const total = Number(data.total);
+            if (data.items.length === 0 || data.items.length < pageSize || (Number.isFinite(total) && voices.length >= total)) {
+                break;
+            }
+
+            offset += data.items.length;
         }
 
         const namesSeen = new Map();
-        return data.items.map(voice => {
+        return voices.map(voice => {
             const baseName = String(voice.name || voice.slug || voice.id || 'Unnamed voice');
             const count = namesSeen.get(baseName) ?? 0;
             namesSeen.set(baseName, count + 1);
@@ -341,10 +356,11 @@ export class MistralTtsProvider {
 
 class MistralApiError extends Error {
     constructor(status, detail) {
-        super(`Mistral API error ${status}: ${detail}`);
+        const formattedDetail = formatErrorDetail(detail);
+        super(`Mistral API error ${status}: ${formattedDetail}`);
         this.name = 'MistralApiError';
         this.status = status;
-        this.detail = detail;
+        this.detail = formattedDetail;
     }
 }
 
@@ -354,9 +370,43 @@ async function readErrorDetail(response) {
 
     try {
         const data = JSON.parse(text);
-        return data?.message ?? data?.detail ?? data?.error?.message ?? text;
+        return formatErrorDetail(data?.message ?? data?.detail ?? data?.error?.message ?? data);
     } catch {
         return text;
+    }
+}
+
+function formatErrorDetail(detail) {
+    if (detail === null || detail === undefined) {
+        return 'Request failed';
+    }
+
+    if (typeof detail !== 'object') {
+        return String(detail);
+    }
+
+    if (Array.isArray(detail)) {
+        return detail.map(formatErrorDetail).filter(Boolean).join('; ') || 'Request failed';
+    }
+
+    const message = detail.message ?? detail.msg;
+    if (message !== undefined) {
+        const location = Array.isArray(detail.loc) ? detail.loc.join('.') : '';
+        return `${location ? `${location}: ` : ''}${formatErrorDetail(message)}`;
+    }
+
+    if (detail.detail !== undefined) {
+        return formatErrorDetail(detail.detail);
+    }
+
+    if (detail.error !== undefined) {
+        return formatErrorDetail(detail.error);
+    }
+
+    try {
+        return JSON.stringify(detail);
+    } catch {
+        return 'Request failed';
     }
 }
 
