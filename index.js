@@ -1,25 +1,22 @@
 import { MistralTtsProvider } from './mistral-provider.js';
+import { registerTtsProvider } from '/scripts/extensions/tts/index.js';
 
 const PROVIDER_NAME = 'Mistral';
 let initialized = false;
 
 /**
- * Registers the provider with SillyTavern's built-in TTS extension.
+ * Registers the provider before SillyTavern initializes the saved TTS provider.
  */
-export async function init() {
+function registerProvider() {
     if (initialized) {
         return;
     }
 
-    initialized = true;
-
     try {
-        const { registerTtsProvider } = await import('/scripts/extensions/tts/index.js');
         registerTtsProvider(PROVIDER_NAME, MistralTtsProvider);
+        initialized = true;
         console.info('[Mistral TTS] Provider registered.');
     } catch (error) {
-        initialized = false;
-
         if (String(error?.message ?? error).includes('already registered')) {
             initialized = true;
             return;
@@ -33,7 +30,12 @@ export async function init() {
     }
 }
 
-jQuery(async () => {
-    await init();
-});
+// Extension modules are evaluated before their init hooks are activated. Registering
+// here prevents the built-in TTS init hook from restoring a provider that is not yet
+// present in its registry.
+registerProvider();
+
+export async function init() {
+    registerProvider();
+}
 
