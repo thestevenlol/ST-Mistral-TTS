@@ -1,0 +1,51 @@
+.mistral-tts-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.mistral-tts-warning {
+    padding: 0.65rem 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--SmartThemeQuoteColor) 65%, transparent);
+    border-radius: 0.35rem;
+    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 12%, transparent);
+    font-size: 0.9em;
+}
+
+.mistral-tts-key-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.mistral-tts-key-row input {
+    flex: 1 1 14rem;
+}
+
+.mistral-tts-key-saved {
+    color: var(--SmartThemeEmColor);
+}
+
+.mistral-tts-checkbox {
+    margin-top: 0.25rem;
+}
+
+.mistral-tts-status {
+    min-height: 1.25em;
+    margin-top: 0.25rem;
+    font-size: 0.9em;
+}
+
+.mistral-tts-status.success {
+    color: var(--SmartThemeEmColor);
+}
+
+.mistral-tts-status.warning {
+    color: var(--SmartThemeQuoteColor);
+}
+
+.mistral-tts-status.error {
+    color: var(--warning-color, #d44);
+}
+
