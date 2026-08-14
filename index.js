@@ -11,6 +11,8 @@ let mediaRecorder;
 let mediaStream;
 let audioChunks = [];
 let state = 'idle';
+let composerObserver;
+let remountQueued = false;
 
 export function init() {
     initializationPromise ??= initialize();
@@ -19,15 +21,22 @@ export function init() {
 
 async function initialize() {
     await domReady();
+    await mountButton();
+    observeComposer();
+}
 
-    if (document.getElementById(BUTTON_ID)) {
+async function mountButton() {
+    const existingButton = document.getElementById(BUTTON_ID);
+    if (existingButton) {
+        button = existingButton;
+        updateButtonState(state);
         return;
     }
 
     const container = await findComposerContainer();
     button = document.createElement('div');
     button.id = BUTTON_ID;
-    button.className = 'fa-solid fa-microphone interactable mistral-stt-button';
+    button.className = 'fa-solid fa-microphone speech-toggle interactable mistral-stt-button';
     button.tabIndex = 0;
     button.setAttribute('role', 'button');
     button.addEventListener('click', toggleRecording);
@@ -41,6 +50,22 @@ async function initialize() {
     container.prepend(button);
     updateButtonState('idle');
     console.info('[Mistral STT] Microphone button ready.');
+}
+
+function observeComposer() {
+    composerObserver?.disconnect();
+    composerObserver = new MutationObserver(() => {
+        if (document.getElementById(BUTTON_ID) || remountQueued) {
+            return;
+        }
+
+        remountQueued = true;
+        setTimeout(() => {
+            remountQueued = false;
+            void mountButton().catch(error => console.error('[Mistral STT] Could not remount microphone button.', error));
+        }, 0);
+    });
+    composerObserver.observe(document.body, { childList: true, subtree: true });
 }
 
 async function toggleRecording() {
@@ -356,7 +381,10 @@ function domReady() {
 }
 
 function findComposerContainer() {
-    const find = () => document.getElementById('send_but_sheld') ?? document.getElementById('rightSendForm');
+    const find = () => document.getElementById('send_but_sheld')
+        ?? document.getElementById('rightSendForm')
+        ?? document.getElementById('send_form')
+        ?? document.getElementById('send_textarea')?.parentElement;
     const existing = find();
     if (existing) {
         return Promise.resolve(existing);
@@ -386,6 +414,8 @@ export function dispose() {
         mediaRecorder.stop();
     }
     cleanupMedia();
+    composerObserver?.disconnect();
+    composerObserver = undefined;
     button?.remove();
     button = undefined;
     initializationPromise = undefined;
